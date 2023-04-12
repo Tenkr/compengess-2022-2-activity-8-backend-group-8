@@ -26,7 +26,16 @@ exports.getGroupMembers = async (req, res) => {
 // TODO #1.1: Get items from DynamoDB
 exports.getItems = async (req, res) => {
   // You should change the response below.
-  res.send("This route should get all items in DynamoDB.");
+  const params = {
+    TableName: process.env.aws_items_table_name,
+  };
+  try {
+    const data = await docClient.send(new ScanCommand(params));
+    res.send(data.Items);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send(err);
+  }
 };
 
 // TODO #1.2: Add an item to DynamoDB
@@ -36,13 +45,40 @@ exports.addItem = async (req, res) => {
   const item = { item_id: item_id, ...req.body, created_date: created_date };
 
   // You should change the response below.
-  res.send("This route should add an item in DynamoDB.");
+  const putParams = {
+    TableName: process.env.aws_items_table_name,
+    Item: item, // member object to be added
+    ConditionExpression: "attribute_not_exists(student_id)" // add if and only if the student_id not already exists
+    }
+  try{
+    // use 'PutCommand' object to insert an item into the table
+    const response = await docClient.send(new PutCommand(putParams));
+    console.log("adding member to the database")
+  }
+  catch(err){
+    alert(err);
+    return
+  }
+  res.send("This route should add  an item in Dynamo DB");
+
 };
 
 // TODO #1.3: Delete an item from DynamDB
 exports.deleteItem = async (req, res) => {
+
   const item_id = req.params.item_id;
 
+  const deleteParams = {
+  TableName: process.env.aws_items_table_name,
+  Key: { item_id: item_id }
+  }
+  try {
+    const response = await docClient.send(new DeleteCommand(deleteParams));
+    console.log(response);
+  } catch (err) {
+    alert(err);
+    return
+  }
   // You should change the response below.
   res.send("This route should delete an item in DynamoDB with item_id.");
 };
